@@ -1,0 +1,74 @@
+/**
+ * Minimize Blocks Stylesheet
+ *
+ * This stylesheet is used to add default styles to widgets on the front-end.
+ */
+
+/* General */
+.minimize-block-widget {
+	display: inline;
+	vertical-align: top;
+	/*clear: both;*/
+}
+
+.minimize-block-widget-large, .minimize-block-widget-single-large,
+.minimize-block-widget-medium, .minimize-block-widget-single-medium,
+.minimize-block-widget-small, .minimize-block-widget-single-small {
+}
+
+.minimize-block-widget-large .thumbnail img, .minimize-block-widget-single-large .thumbnail img,
+.minimize-block-widget-medium .thumbnail img, .minimize-block-widget-single-medium .thumbnail img,
+.minimize-block-widget-small .thumbnail img, .minimize-block-widget-single-small .thumbnail img {
+	max-width: 100%;
+	height: auto;
+}
+
+/* Large */
+.minimize-block-widget-large, .minimize-block-widget-single-large {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+.minimize-block-widget-large .thumbnail, .minimize-block-widget-single-large .thumbnail {
+	width: 50%;
+	margin: 0;
+	padding: 0;
+	float: left;
+}
+
+.minimize-block-widget-large .content-has-post-thumbnail, .minimize-block-widget-single-large .content-has-post-thumbnail {
+	width: 50%;
+	margin: 0;
+	padding: 0;
+	float: left;
+}
+
+/* Medium */
+.minimize-block-widget-medium, .minimize-block-widget-single-medium {
+	width: 50%;
+	margin: 0 -4px 0 0;
+	padding: 0;
+	/*float: left;*/
+	display: inline-block;
+	vertical-align: top;
+}
+
+.minimize-block-widget-medium .thumbnail, .minimize-block-widget-single-medium .thumbnail {
+	margin: 0;
+	padding: 0;
+}
+
+/* Small */
+.minimize-block-widget-small, .minimize-block-widget-single-small {
+	width: 33%;
+	margin: 0 -4px 0 0;
+	padding: 0;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.minimize-block-widget-small .thumbnail, .minimize-block-widget-single-small .thumbnail {
+	margin: 0;
+	padding: 0;
+}
