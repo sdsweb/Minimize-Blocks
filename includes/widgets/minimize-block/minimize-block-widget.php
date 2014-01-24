@@ -52,7 +52,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 					'orderby' => 'date',
 					'order' => 'DESC',
 					'posts_per_page' => get_option( 'posts_per_page' ),
-					'offset' => 0,
+					'offset' => 1,
 					'cat' => false,
 					'post__in' => false,
 					'post__not_in' => false,
@@ -229,7 +229,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 
 					<p class="mb-posts-per-page mb-feature-many <?php echo ( ! $instance['feature_many'] ) ? 'mb-hidden' : false; ?>">
 						<?php // Number of Posts to Display ?>
-						<label for="<?php echo $this->get_field_id( 'offset' ); ?>"><strong>Show a maximum of
+						<label for="<?php echo $this->get_field_id( 'posts_per_page' ); ?>"><strong>Show a maximum of
 							<input type="text" class="mb-input mb-inline-input" id="<?php echo $this->get_field_id( 'posts_per_page' ); ?>" name="<?php echo $this->get_field_name( 'posts_per_page' ); ?>" type="text" value="<?php echo esc_attr( $instance['query_args']['posts_per_page'] ); ?>" />
 							posts.
 						</strong></label>
@@ -390,7 +390,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 			$new_instance['query_args']['orderby'] = ( $new_instance['orderby'] && ! empty( $new_instance['orderby'] ) ) ? sanitize_text_field( $new_instance['orderby'] ) : 'date'; // Order By
 			$new_instance['query_args']['order'] = ( $new_instance['orderby'] && ! empty( $new_instance['order'] ) ) ? sanitize_text_field( $new_instance['order'] ) : 'DESC'; // Order
 			$new_instance['query_args']['posts_per_page'] = ( $new_instance['feature_many'] && ! empty( $new_instance['posts_per_page'] ) ) ? abs( ( int ) $new_instance['posts_per_page'] ) : get_option( 'posts_per_page' ); // Number of Posts
-			$new_instance['query_args']['offset'] = ( $new_instance['feature_many'] && ! empty( $new_instance['offset'] ) ) ? abs( ( int ) $new_instance['offset'] ) : 0; // Offset
+			$new_instance['query_args']['offset'] = ( $new_instance['feature_many'] && ! empty( $new_instance['offset'] ) ) ? abs( ( int ) $new_instance['offset'] ) : 1; // Offset
 
 			// Post In
 			if ( $new_instance['feature_many'] && ! empty( $new_instance['post__in'] ) ) {
@@ -470,7 +470,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 					'orderby' => $instance['query_args']['orderby'],
 					'order' => $instance['query_args']['order'],
 					'posts_per_page' => $instance['query_args']['posts_per_page'],
-					'offset' => $instance['query_args']['offset']
+					'offset' => ( $instance['query_args']['offset'] > 1 ) ? ( $instance['query_args']['offset'] - 1 ) : 0
 				);
 
 				// If a posts should be excluded (and none to be included)
@@ -479,7 +479,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 
 				// If a posts should be included
 				if ( ! empty( $instance['post__in'] ) ) {
-					$mb_featured_content_args['post__in'] = explode( ',', $instance['query_args']['post__in'] );
+					$mb_featured_content_args['post__in'] = ( strpos($instance['query_args']['post__in'], ',' ) !== false ) ? explode( ',', $instance['query_args']['post__in'] ) : ( array ) $instance['query_args']['post__in'];
 					$mb_featured_content_args['post_type'] = get_post_types( array( 'public' => true ), 'names' ); // All post types
 					$mb_featured_content_args['orderby'] = 'post__in'; // Order by order of posts specified by user
 					unset( $mb_featured_content_args['post__not_in'] ); // Ignore excluded posts
