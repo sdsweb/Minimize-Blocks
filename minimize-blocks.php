@@ -1,15 +1,15 @@
 <?php
 /**
  * Plugin Name: Minimize Blocks
- * Plugin URI: http://www.slocumstudio.com
+ * Plugin URI: http://www.slocumstudio.com/
  * Description: A plugin that adds content blocks to your Front Page on Minimize.
- * Version: 1.0
+ * Version: 1.0.2
  * Author: Slocum Design Studio
- * Author URI: http://www.slocumstudio.com
+ * Author URI: http://www.slocumstudio.com/
  */
 
-define( 'MB_VERSION', '1.0' ); // Version
-define( 'MB_PLUGIN_FILE', __FILE__ ); // Refmbnce to this plugin file
+define( 'MB_VERSION', '1.0.2' ); // Version
+define( 'MB_PLUGIN_FILE', __FILE__ ); // Reference to this plugin file
 define( 'MB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); // Plugin directory path
 define( 'MB_PLUGIN_URL', trailingslashit( plugins_url( '' , __FILE__ ) ) ); // Plugin url
 
@@ -73,7 +73,7 @@ if( ! class_exists( 'Minimize_Blocks' ) ) {
 				if ( version_compare( $mb_update_message_dismissed, $mb_update_available, '<' ) ) {
 		?>
 					<div class="updated" style="padding: 15px; position: relative;" id="mb_dashboard_message" data-version="<?php echo $mb_update_available; ?>">
-						<strong>Thmb is a new update for Minimize Blocks (v<?php echo $mb_update_available; ?>). You're currently using version <?php echo MB_VERSION; ?>. <a href="plugins.php">Download Update</a>.</strong>
+						<strong>There is a new update for Minimize Blocks (v<?php echo $mb_update_available; ?>). You're currently using version <?php echo MB_VERSION; ?>. <a href="plugins.php">Download Update</a>.</strong>
 						<a href="javascript:void(0);" onclick="DismissUpgradeMessage();" style="float: right;">Dismiss.</a>
 					</div>
 					<script type="text/javascript">
@@ -96,10 +96,10 @@ if( ! class_exists( 'Minimize_Blocks' ) ) {
 		}
 
 		function wp_ajax_dismiss_mb_update_notification() {
-			check_ajax_refmbr( 'dismiss_mb_update_notification' );
+			check_ajax_referer( 'dismiss_mb_update_notification' );
 
 			if ( isset( $_POST['version'] ) && ! empty( $_POST['version'] ) ) {
-				update_option( 'mb_update_message_dismissed', $_POST['version'] );
+				update_option( 'mb_update_message_dismissed', sanitize_text_field( $_POST['version'] ) );
 				echo 'true';
 			}
 			else

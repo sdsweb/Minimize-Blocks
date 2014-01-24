@@ -10,9 +10,8 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 	class Minimize_Block_Widget extends WP_Widget {
 		private static $instance; // Keep track of the instance
 
-		/*
-		 * Function used to create instance of class.
-		 * This is used to prevent over-writing of a variable (old method), i.e. $nbtg = new NBTG();
+		/**
+		 * This function is used to get/create an instance of the class.
 		 */
 		public static function instance() {
 			if ( ! isset( self::$instance ) )
@@ -21,7 +20,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 			return self::$instance;
 		}
 
-		/*
+		/**
 		 * This function sets up all widget options including class name, description, width/height, and creates an instance of the widget
 		 */
 		function __construct() {
@@ -29,16 +28,17 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 			$control_options = array( 'width' => 550, 'height' => 350, 'id_base' => 'minimize-block-widget' );
 			self::WP_Widget( 'minimize-block-widget', 'Minimize Block', $widget_options, $control_options );
 
+			// Widget specific hooks
 			add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) ); // Enqueue admin scripts
 			add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts' ) ); // Enqueue CSS
 		}
 
 
 		/**
-		 * This function sets up the form on admin pages
+		 * This function configures the form on the Widgets Admin Page.
 		 */
 		function form( $instance ) {
-			global $wpdb, $post;
+			global $wpdb, $post, $_wp_additional_image_sizes;
 
 			// Set up the default widget settings
 			$defaults = array(
@@ -46,11 +46,13 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 				'widget_size' => 'large',
 				'feature_many' => false, // Feature one content piece
 				'post_id' => false, // Post ID used if featuring only one (above)
-				'query_args' => array ( // Query arguments if featuring many
+				// Query arguments if featuring many
+				'query_args' => array(
 					'post_type' => 'post',
 					'orderby' => 'date',
 					'order' => 'DESC',
 					'posts_per_page' => get_option( 'posts_per_page' ),
+					'offset' => 0,
 					'cat' => false,
 					'post__in' => false,
 					'post__not_in' => false,
@@ -58,13 +60,14 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 				'hide_title' => false,
 				'hide_post_title' => false,
 				'show_post_thumbnails' => false,
+				'post_thumbnails_size' => false,
 				'excerpt_length' => 55,
 				'read_more_label' => 'Read More',
 				'hide_read_more' => false,
 				'css_class' => false
 			);
 
-			$instance = wp_parse_args( (array) $instance, apply_filters( 'mb_widget_defaults', $defaults ) ); // Parse any saved arguments into defaults
+			$instance = wp_parse_args( ( array ) $instance, apply_filters( 'mb_widget_defaults', $defaults ) ); // Parse any saved arguments into defaults
 
 			// Get all public post types and format the list for display in drop down
 			if ( ! $public_post_types = wp_cache_get( 'public_post_types', 'minimize-block-widget' ) ) {
@@ -73,7 +76,6 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 				wp_cache_add( 'public_post_types', $public_post_types, 'minimize-block-widget' ); // Store cache
 			}
 		?>
-
 			<p class="mb-widget-title">
 				<?php // Widget Title ?>
 				<label for="<?php echo $this->get_field_id( 'title' ) ; ?>"><strong>Title</strong></label>
@@ -92,17 +94,17 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 					<option value="large" <?php selected( $instance['widget_size'], 'large' ); ?>>Large</option>
 				</select>
 				<br />
-				<small class="description">Change the size of the widget displayed on the front end.</small>
+				<small class="description mb-description">Change the size of the widget displayed on the front end.</small>
 			</p>
 
 
 			<div class="minimize-block-column minimize-block-first-column">
 				<div class="minimize-block-section minimize-block-section-top minimize-block-section-general">
-					<h3>General Settings</h3>
+					<h3>Content Settings</h3>
 
 					<p class="mb-feature-content-pieces">
 						<?php // Feature Many (feature one or many pieces of content) ?>
-						<label for="<?php echo $this->get_field_id( 'feature_many' ); ?>"><strong>Feature one or many pieces of content?</strong></label>
+						<label for="<?php echo $this->get_field_id( 'feature_many' ); ?>"><strong>Feature one or many content pieces?</strong></label>
 						<br />
 						<select name="<?php echo $this->get_field_name( 'feature_many' ); ?>" id="<?php echo $this->get_field_id( 'feature_many' ); ?>" class="minimize-block-feature-many mb-select">
 							<option value="">One Piece of Content</option>
@@ -130,7 +132,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 										if ( ! $posts = wp_cache_get( $public_post_type . '_data', 'minimize-block-widget' ) ) {
 											$posts =$wpdb->get_results(
 												$wpdb->prepare(
-													"SELECT SQL_CALC_FOUND_ROWS $wpdb->posts.ID, $wpdb->posts.post_title FROM $wpdb->posts  WHERE 1=1  AND $wpdb->posts.post_type = '$public_post_type' AND $wpdb->posts.post_status = 'publish' ORDER BY $wpdb->posts.post_title ASC LIMIT 0, $post_count"
+													"SELECT SQL_CALC_FOUND_ROWS $wpdb->posts.ID, $wpdb->posts.post_title FROM $wpdb->posts WHERE 1=1 AND $wpdb->posts.post_type = '$public_post_type' AND $wpdb->posts.post_status = 'publish' ORDER BY $wpdb->posts.post_title ASC LIMIT 0, $post_count"
 												)
 											);
 											wp_cache_add( $public_post_type . '_data', $posts, 'minimize-block-widget' ); // Store cache
@@ -196,7 +198,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 							) );
 						?>
 						<br />
-						<small class="description">Use categories to filter "Posts" displayed.</small>
+						<small class="description mb-description">Use categories to filter "Posts" displayed.</small>
 					</p>
 
 					<p class="mb-select-orderby mb-feature-many <?php echo ( ! $instance['feature_many'] ) ? 'mb-hidden' : false; ?>">
@@ -227,9 +229,18 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 
 					<p class="mb-posts-per-page mb-feature-many <?php echo ( ! $instance['feature_many'] ) ? 'mb-hidden' : false; ?>">
 						<?php // Number of Posts to Display ?>
-						<label for="<?php echo $this->get_field_id( 'posts_per_page' ); ?>"><strong>Number of Posts To Display</strong></label>
-						<br />
-						<input type="text" class="mb-input" id="<?php echo $this->get_field_id( 'posts_per_page' ); ?>" name="<?php echo $this->get_field_name( 'posts_per_page' ); ?>" type="text" value="<?php echo esc_attr( $instance['query_args']['posts_per_page'] ); ?>" />
+						<label for="<?php echo $this->get_field_id( 'offset' ); ?>"><strong>Show a maximum of
+							<input type="text" class="mb-input mb-inline-input" id="<?php echo $this->get_field_id( 'posts_per_page' ); ?>" name="<?php echo $this->get_field_name( 'posts_per_page' ); ?>" type="text" value="<?php echo esc_attr( $instance['query_args']['posts_per_page'] ); ?>" />
+							posts.
+						</strong></label>
+					</p>
+
+					<p class="mb-offset mb-feature-many <?php echo ( ! $instance['feature_many'] ) ? 'mb-hidden' : false; ?>">
+						<?php // Offset (Number of post to offset by) ?>
+						<label for="<?php echo $this->get_field_id( 'offset' ); ?>"><strong>Start at post #
+							<input type="text" class="mb-input mb-inline-input" id="<?php echo $this->get_field_id( 'offset' ); ?>" name="<?php echo $this->get_field_name( 'offset' ); ?>" value="<?php echo esc_attr( $instance['query_args']['offset'] ); ?>" />
+							.
+						</strong></label>
 					</p>
 
 					<p class="mb-post-in mb-feature-many <?php echo ( ! $instance['feature_many'] ) ? 'mb-hidden' : false; ?>">
@@ -238,7 +249,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 						<br />
 						<input type="text" id="<?php echo $this->get_field_id( 'post__in' ); ?>" name="<?php echo $this->get_field_name( 'post__in' ); ?>" value="<?php echo esc_attr( $instance['query_args']['post__in'] ); ?>" />
 						<br />
-						<small class="description">Comma separated list of post IDs. Will only display these posts.</small>
+						<small class="description mb-description">Comma separated list of post IDs. Only these posts will be displayed. Settings above will be ignored. <a href="http://codex.wordpress.org/FAQ_Working_with_WordPress#How_do_I_determine_a_Post.2C_Page.2C_Category.2C_Tag.2C_Link.2C_Link_Category.2C_or_User_ID.3F" target="_blank">How do I find an ID?</a></small>
 					</p>
 
 					<p class="mb-post-not-in mb-feature-many <?php echo ( ! $instance['feature_many'] ) ? 'mb-hidden' : false; ?>">
@@ -247,10 +258,12 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 						<br />
 						<input type="text" id="<?php echo $this->get_field_id( 'post__not_in' ); ?>" name="<?php echo $this->get_field_name( 'post__not_in' ); ?>" value="<?php echo esc_attr( $instance['query_args']['post__not_in'] ); ?>" />
 						<br />
-						<small class="description">Comma separated list of post IDs. Will display all posts except these.</small>
+						<small class="description mb-description">Comma separated list of post IDs. Will display all posts based on settings above, except those in this list. <a href="http://codex.wordpress.org/FAQ_Working_with_WordPress#How_do_I_determine_a_Post.2C_Page.2C_Category.2C_Tag.2C_Link.2C_Link_Category.2C_or_User_ID.3F" target="_blank">How do I find an ID?</a></small>
 					</p>
 				</div>
+			</div>
 
+			<div class="minimize-block-column minimize-block-second-column">
 				<div class="minimize-block-section minimize-block-section-display">
 					<h3>Display Settings</h3>
 
@@ -263,13 +276,49 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 					<p class="mb-hide-post-title">
 						<?php // Hide Post Title ?>
 						<input id="<?php echo $this->get_field_id( 'hide_post_title' ); ?>" name="<?php echo $this->get_field_name( 'hide_post_title' ); ?>" type="checkbox" <?php checked( $instance['hide_post_title'], true ); ?> />
-						<label for="<?php echo $this->get_field_id( 'hide_post_title' ) ; ?>"><strong>Hide Post Title</strong></label>
+						<label for="<?php echo $this->get_field_id( 'hide_post_title' ) ; ?>"><strong>Hide Post Title(s)</strong></label>
 					</p>
 
 					<p class="mb-show-post-thumbnails">
 						<?php // Show Featured Image ?>
 						<input id="<?php echo $this->get_field_id( 'show_post_thumbnails' ); ?>"  name="<?php echo $this->get_field_name( 'show_post_thumbnails' ); ?>" type="checkbox" <?php checked( $instance['show_post_thumbnails'], true ); ?> />
 						<label for="<?php echo $this->get_field_id( 'show_post_thumbnails' ) ; ?>"><strong>Show Featured Image(s)</strong></label>
+					</p>
+
+					<p class="mb-post-thumbnails-size">
+						<?php // Featured Image Size ?>
+						<label for="<?php echo $this->get_field_id( 'post_thumbnails_size' ); ?>"><strong>Featured Image Size</strong></label>
+						<br />
+						<select name="<?php echo $this->get_field_name( 'post_thumbnails_size' ); ?>" id="<?php echo $this->get_field_id( 'post_thumbnails_size' ); ?>" class="mb-select">
+							<option value="">Select A Size</option>
+							<?php
+								// Get all of the available image sizes
+								if ( ! $avail_image_sizes = wp_cache_get( 'avail_image_sizes', 'minimize-block-widget' ) ) {
+									$avail_image_sizes = array();
+									foreach( get_intermediate_image_sizes() as $size ) {
+										$avail_image_sizes[ $size ] = array( 0, 0 );
+
+										// Built-in Image Sizes
+										if( in_array( $size, array( 'thumbnail', 'medium', 'large' ) ) ) {
+											$avail_image_sizes[ $size ][0] = get_option( $size . '_size_w' );
+											$avail_image_sizes[ $size ][1] = get_option( $size . '_size_h' );
+										}
+										// Additional Image Sizes
+										else if ( isset( $_wp_additional_image_sizes ) && isset( $_wp_additional_image_sizes[ $size ] ) )
+											$avail_image_sizes[ $size ] = array( $_wp_additional_image_sizes[ $size ]['width'], $_wp_additional_image_sizes[ $size ]['height'] );
+									}
+									
+									wp_cache_add( 'avail_image_sizes', $avail_image_sizes, 'minimize-block-widget' ); // Store cache
+								}
+
+								foreach( $avail_image_sizes as $size => $atts ) :
+								?>
+									<option value="<?php echo esc_attr( $size ); ?>" <?php selected( $instance['post_thumbnails_size'], $size ); ?>><?php echo $size . ' (' . implode( 'x', $atts ) . ')'; ?></option>
+								<?php
+								endforeach;
+							?>
+						</select>
+						<small class="description mb-description">Featured Images are typically displayed based on the Widget Size option but you can choose a specific size if you'd like.</small>
 					</p>
 
 					<p class="mb-excerpt-length">
@@ -293,9 +342,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 						<label for="<?php echo $this->get_field_id( 'hide_read_more' ) ; ?>"><strong>Hide Read More Link</strong></label>
 					</p>
 				</div>
-			</div>
 
-			<div class="minimize-block-column minimize-block-second-column">
 				<div class="minimize-block-section minimize-block-section-top minimize-block-section-advanced">
 					<h3>Advanced/Other Settings</h3>
 
@@ -307,7 +354,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 						<br />
 						<input type="text" class="mb-input" id="<?php echo $this->get_field_id( 'css_class' ); ?>" name="<?php echo $this->get_field_name( 'css_class' ); ?>" value="<?php echo esc_attr( $instance['css_class'] ); ?>" />
 						<br />
-						<small class="description">Space separated list of custom CSS classes which can be used to target this widget on the front-end.</small>
+						<small class="description mb-description">Space separated list of custom CSS classes which can be used to target this widget on the front-end.</small>
 					</p>
 
 					<?php do_action( 'mb_widget_advanced_section_end', $this, $instance ); ?> 
@@ -317,7 +364,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 			<div class="clear"></div>
 
 			<p class="mb-widget-slug">
-				Brought to you by <a href="http://slocumstudio.com" target="_blank">Slocum Design Studio</a>
+				Content management brought to you by <a href="http://slocumstudio.com?utm_source=<?php echo home_url(); ?>&utm_medium=minimize-block-plugs&utm_campaign=MinimizeBlocks" target="_blank">Slocum Studio</a>
 			</p>
 
 		<?php
@@ -328,7 +375,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 		 */
 		function update( $new_instance, $old_instance ) {
 			// Sanitize all input data
-			$new_instance['title'] = sanitize_text_field( $new_instance['title'] ); // Widget Title
+			$new_instance['title'] = ( ! empty( $new_instance['title'] ) ) ? sanitize_text_field( $new_instance['title'] ) : false; // Widget Title
 			$new_instance['widget_size'] = ( ! empty( $new_instance['widget_size'] ) ) ? sanitize_text_field( $new_instance['widget_size'] ) : 'large'; // Widget Size (default to large)
 
 			// General
@@ -343,18 +390,46 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 			$new_instance['query_args']['orderby'] = ( $new_instance['orderby'] && ! empty( $new_instance['orderby'] ) ) ? sanitize_text_field( $new_instance['orderby'] ) : 'date'; // Order By
 			$new_instance['query_args']['order'] = ( $new_instance['orderby'] && ! empty( $new_instance['order'] ) ) ? sanitize_text_field( $new_instance['order'] ) : 'DESC'; // Order
 			$new_instance['query_args']['posts_per_page'] = ( $new_instance['feature_many'] && ! empty( $new_instance['posts_per_page'] ) ) ? abs( ( int ) $new_instance['posts_per_page'] ) : get_option( 'posts_per_page' ); // Number of Posts
-			$new_instance['query_args']['post__in'] = ( $new_instance['feature_many'] && ! empty( $new_instance['post__in'] ) ) ?  sanitize_text_field( str_replace( ' ', '', $new_instance['post__in'] ) ) : false; // Specifically Include Posts
-			$new_instance['query_args']['post__not_in'] = ( $new_instance['feature_many'] && ! empty( $new_instance['post__not_in'] ) ) ?  sanitize_text_field( str_replace( ' ', '', $new_instance['post__not_in'] ) ) : false; // Exclude Posts
+			$new_instance['query_args']['offset'] = ( $new_instance['feature_many'] && ! empty( $new_instance['offset'] ) ) ? abs( ( int ) $new_instance['offset'] ) : 0; // Offset
+
+			// Post In
+			if ( $new_instance['feature_many'] && ! empty( $new_instance['post__in'] ) ) {
+				// Keep only digits and commas
+				preg_match_all( '/\d+(?:,\d+)*/', $new_instance['post__in'], $new_instance['query_args']['post__in'] );
+				$new_instance['query_args']['post__in'] = implode( ',', $new_instance['query_args']['post__in'][0] );
+			}
+			else
+				$new_instance['query_args']['post__in'] = false;
+
+			// Post Not In
+			if ( $new_instance['feature_many'] && ! empty( $new_instance['post__not_in'] ) ) {
+				// Keep only digits and commas
+				preg_match_all( '/\d+(?:,\d+)*/', $new_instance['post__not_in'], $new_instance['query_args']['post__not_in'] );
+				$new_instance['query_args']['post__not_in'] = implode( ',', $new_instance['query_args']['post__not_in'][0] );
+			}
+			else
+				$new_instance['query_args']['post__not_in'] = false;
 
 			// Display
 			$new_instance['hide_title'] = ( isset( $new_instance['hide_title'] ) ) ? true : false; // Hide Widget Title
 			$new_instance['hide_post_title'] = ( isset( $new_instance['hide_post_title'] ) ) ? true : false; // Hide Post Title
 			$new_instance['show_post_thumbnails'] = ( isset( $new_instance['show_post_thumbnails'] ) ) ? true : false; // Featured Images
+			$new_instance['post_thumbnails_size'] = ( ! empty( $new_instance['post_thumbnails_size'] ) ) ? sanitize_text_field( $new_instance['post_thumbnails_size'] ) : false; // Post Thumbnails Size
 			$new_instance['read_more_label'] = ( ! empty( $new_instance['read_more_label'] ) ) ? sanitize_text_field( $new_instance['read_more_label'] ) : 'Read More'; // Read More Link Label (default to Read More)
 			$new_instance['hide_read_more'] = ( isset( $new_instance['hide_read_more'] ) ) ? true : false; // Hide Read More Link
 
 			// Advanced
-			$new_instance['css_class'] = ( ! empty( $new_instance['css_class'] ) ) ? sanitize_text_field( $new_instance['css_class'] ) : false; // CSS Class
+			if ( ! empty( $new_instance['css_class'] ) ) {
+				// Split classes
+				$new_instance['css_class'] = explode( ' ', $new_instance['css_class'] );
+
+				foreach( $new_instance['css_class'] as &$css_class )
+					$css_class = sanitize_title( $css_class );
+
+				$new_instance['css_class'] = implode( ' ', $new_instance['css_class'] );
+			}
+			else
+				$new_instance['css_class'] = false;
 
 			return apply_filters( 'mb_widget_update', $new_instance, $old_instance );
 		}
@@ -394,9 +469,9 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 					'cat' => $instance['query_args']['cat'],
 					'orderby' => $instance['query_args']['orderby'],
 					'order' => $instance['query_args']['order'],
-					'posts_per_page' => $instance['query_args']['posts_per_page']
+					'posts_per_page' => $instance['query_args']['posts_per_page'],
+					'offset' => $instance['query_args']['offset']
 				);
-				$mb_featured_content_args = apply_filters( 'mb_widget_feature_many_query_args', $mb_featured_content_args, $instance );
 
 				// If a posts should be excluded (and none to be included)
 				if ( ! empty( $instance['query_args']['post__not_in'] ) && empty( $instance['query_args']['post__in'] ) )
@@ -410,6 +485,9 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 					unset( $mb_featured_content_args['post__not_in'] ); // Ignore excluded posts
 					unset( $mb_featured_content_args['posts_per_page'] ); // Ignore posts per page
 				}
+
+				// Allow filtering of query arguments
+				$mb_featured_content_args = apply_filters( 'mb_widget_feature_many_query_args', $mb_featured_content_args, $instance );
 
 				$mb_featured_content_query = new WP_Query( $mb_featured_content_args );
 
@@ -450,8 +528,6 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 			}
 		 }
 
-
-
 		/**
 		 * This function enqueues the necessary styles associated with this widget.
 		 */
@@ -477,14 +553,11 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 				$post = get_post( $post );
 			else if( ! is_object( $post ) )
 				return false;
-		 
-			if( has_excerpt( $post->ID ) ) {
-				$the_excerpt = $post->post_excerpt;
-				return apply_filters( 'the_content', $the_excerpt );
-			}
-			else
-				$the_excerpt = $post->post_content;
-		 
+
+			if ( post_password_required( $post ) )
+				return get_the_password_form( $post );
+
+			$the_excerpt = ( has_excerpt( $post->ID ) ) ? $post->post_excerpt : $post->post_content;
 			$the_excerpt = strip_shortcodes( strip_tags( $the_excerpt ), $tags );
 			$the_excerpt = preg_split( '/\b/', $the_excerpt, $length * 2 + 1 );
 
@@ -498,7 +571,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 		/**
 		 * This function handles the display of posts on widget output.
 		 */
-		function display_post( $instance, $args, $post, $post_classes = '', $single = false) {
+		function display_post( $instance, $args, $post, $post_classes = '', $single = false ) {
 			extract( $args ); // $before_widget, $after_widget, $before_title, $after_title
 
 			do_action( 'mb_widget_before_widget', $instance, $post );
@@ -522,7 +595,17 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 					<?php do_action( 'mb_widget_before_post_thumbnail', $instance, $post ); ?>
 					<section class="thumbnail post-thumbnail featured-image">
 						<a href="<?php echo get_permalink( $post->ID ); ?>">
-							<?php echo get_the_post_thumbnail( $post->ID, apply_filters( 'mb_widget_post_thumbnail_size', 'medium', $instance, $post ) ); ?>
+							<?php
+								// Output desired featured image size
+								if ( ! empty( $instance['post_thumbnails_size'] ) )
+									$mb_thumbnail_size = $instance['post_thumbnails_size'];
+								else
+									$mb_thumbnail_size = ( $instance['widget_size'] !== 'small' ) ? $instance['widget_size'] : 'thumbnail';
+
+								$mb_thumbnail_size = apply_filters( 'mb_widget_post_thumbnail_size', $mb_thumbnail_size, $instance, $post );
+
+								echo get_the_post_thumbnail( $post->ID, $mb_thumbnail_size );
+							?>
 						</a>
 					</section>
 					<?php do_action( 'mb_widget_after_post_thumbnail', $instance, $post ); ?>
@@ -537,7 +620,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 
 					<?php
 						do_action( 'mb_widget_before_post_content', $instance, $post );
-						echo $this->get_excerpt_by_id( $post->ID, $instance['excerpt_length'] );
+						echo $this->get_excerpt_by_id( $post, $instance['excerpt_length'] );
 						do_action( 'mb_widget_after_post_content', $instance, $post );
 					?>
 
@@ -560,5 +643,6 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 		return Minimize_Block_Widget::instance();
 	}
 
+	// Start Minimize Blocks
 	Minimize_Block_Widget_Instance();
 }
