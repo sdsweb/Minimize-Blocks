@@ -547,7 +547,7 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 		/**
 		 * This function gets the excerpt of a specific post ID or object.
 		 */
-		function get_excerpt_by_id( $post, $length = 55, $tags = '', $extra = '...' ) {
+		function get_excerpt_by_id( $post, $length = 55, $tags = array(), $extra = '...' ) {
 			// Get the post object of the passed ID
 			if( is_int( $post ) )
 				$post = get_post( $post );
@@ -557,8 +557,13 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 			if ( post_password_required( $post ) )
 				return get_the_password_form( $post );
 
+			// Allowed HTML tags in excerpt
+			$tags = apply_filters( 'mb_widget_excerpt_allowable_tags', ( array ) $tags, $post );
+			$tags = implode( '', $tags );
+			//echo $tags;
+
 			$the_excerpt = ( has_excerpt( $post->ID ) ) ? $post->post_excerpt : $post->post_content;
-			$the_excerpt = strip_shortcodes( strip_tags( $the_excerpt ), $tags );
+			$the_excerpt = strip_shortcodes( strip_tags( $the_excerpt, $tags ) );
 			$the_excerpt = preg_split( '/\b/', $the_excerpt, $length * 2 + 1 );
 
 			array_pop( $the_excerpt );

@@ -3,12 +3,12 @@
  * Plugin Name: Minimize Blocks
  * Plugin URI: http://www.slocumstudio.com/
  * Description: A plugin that adds content blocks to your Front Page on Minimize.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Slocum Design Studio
  * Author URI: http://www.slocumstudio.com/
  */
 
-define( 'MB_VERSION', '1.0.2' ); // Version
+define( 'MB_VERSION', '1.0.3' ); // Version
 define( 'MB_PLUGIN_FILE', __FILE__ ); // Reference to this plugin file
 define( 'MB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) ); // Plugin directory path
 define( 'MB_PLUGIN_URL', trailingslashit( plugins_url( '' , __FILE__ ) ) ); // Plugin url
