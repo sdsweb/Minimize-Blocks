@@ -560,7 +560,6 @@ if( ! class_exists( 'Minimize_Block_Widget' ) ) {
 			// Allowed HTML tags in excerpt
 			$tags = apply_filters( 'mb_widget_excerpt_allowable_tags', ( array ) $tags, $post );
 			$tags = implode( '', $tags );
-			//echo $tags;
 
 			$the_excerpt = ( has_excerpt( $post->ID ) ) ? $post->post_excerpt : $post->post_content;
 			$the_excerpt = strip_shortcodes( strip_tags( $the_excerpt, $tags ) );
